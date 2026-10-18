@@ -15,6 +15,11 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 class MainActivity : Activity() {
+    companion object {
+        // Domains (inkl. Subdomains), die ohne Rückfrage geöffnet werden
+        private val TRUSTED_DOMAINS = listOf("bluenexus-home.de")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val options = GmsBarcodeScannerOptions.Builder()
@@ -36,12 +41,36 @@ class MainActivity : Activity() {
             showText(value.orEmpty())
             return
         }
+        val host = Uri.parse(url).host?.lowercase().orEmpty()
+        val trusted = TRUSTED_DOMAINS.any { host == it || host.endsWith(".$it") }
+        if (trusted) launch(url) else confirmOpen(url, host)
+    }
+
+    private fun launch(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(this, "Kein Browser gefunden", Toast.LENGTH_LONG).show()
         }
         finish()
+    }
+
+    private fun confirmOpen(url: String, host: String) {
+        val tv = TextView(this).apply {
+            text = "Domain: $host
+
+$url"
+            textSize = 16f
+            setTextIsSelectable(true)
+            setPadding(60, 40, 60, 20)
+        }
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+            .setTitle("Diese Seite öffnen?")
+            .setView(tv)
+            .setPositiveButton("Öffnen") { _, _ -> launch(url) }
+            .setNegativeButton("Abbrechen", null)
+            .setOnDismissListener { if (!isFinishing) finish() }
+            .show()
     }
 
     private fun showText(text: String) {
