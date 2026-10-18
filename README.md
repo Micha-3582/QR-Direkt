@@ -22,3 +22,6 @@ APK aus dem Release herunterladen, auf dem Handy öffnen, „Installation aus un
 ## Selbst bauen
 `JAVA_HOME` auf JDK 17 setzen und `./gradlew assembleRelease`. Ohne eigenen Release-Schlüssel (`../_Schluessel/qr-direkt-keystore.properties`) wird mit dem Debug-Schlüssel signiert.
 
+
+## Lizenz
+Frei für alle: Public Domain (Unlicense). Jeder darf die App und den Code beliebig nutzen, ändern und weitergeben.
