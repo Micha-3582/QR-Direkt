@@ -57,9 +57,7 @@ class MainActivity : Activity() {
 
     private fun confirmOpen(url: String, host: String) {
         val tv = TextView(this).apply {
-            text = "Domain: $host
-
-$url"
+            text = "Domain: $host\n\n$url"
             textSize = 16f
             setTextIsSelectable(true)
             setPadding(60, 40, 60, 20)
