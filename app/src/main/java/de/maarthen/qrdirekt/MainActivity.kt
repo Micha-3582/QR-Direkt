@@ -136,12 +136,34 @@ class MainActivity : ComponentActivity() {
             }
             try {
                 provider.unbindAll()
-                provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, prev, analysis)
+                val camera = provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, prev, analysis)
+                if (camera.cameraInfo.hasFlashUnit()) addTorch(camera.cameraControl)
             } catch (e: Exception) {
                 Toast.makeText(this, "Kamera nicht verfügbar: ${e.message}", Toast.LENGTH_LONG).show()
                 finish()
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    /** Taschenlampe oben links: bei schlechtem Licht ein-/ausschalten. */
+    private fun addTorch(control: androidx.camera.core.CameraControl) {
+        var on = false
+        val bg = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x88000000.toInt()) }
+        val torch = TextView(this).apply {
+            text = "🔦"
+            textSize = 24f
+            gravity = Gravity.CENTER
+            background = bg
+            contentDescription = "Taschenlampe"
+            setOnClickListener {
+                on = !on
+                control.enableTorch(on)
+                bg.setColor(if (on) 0xCCFFC107.toInt() else 0x88000000.toInt())
+            }
+        }
+        root.addView(torch, FrameLayout.LayoutParams(dp(52), dp(52), Gravity.TOP or Gravity.START).apply {
+            topMargin = dp(16); marginStart = dp(16)
+        })
     }
 
     /** Zahnrad oben rechts (nicht im Auswahlmodus der Einstellungen). */

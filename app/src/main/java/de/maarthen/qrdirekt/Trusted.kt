@@ -7,13 +7,10 @@ import android.net.Uri
 object Trusted {
     private const val PREFS = "qrdirekt"
     private const val KEY = "domains"
-    private const val DEFAULT = "bluenexus-home.de"
 
     fun list(ctx: Context): List<String> {
         val p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        // Beim ersten Start ist die Standard-Domain vorbelegt (in den Einstellungen entfernbar)
-        val set = p.getStringSet(KEY, null) ?: setOf(DEFAULT)
-        return set.sorted()
+        return (p.getStringSet(KEY, null) ?: emptySet()).sorted()
     }
 
     private fun save(ctx: Context, domains: Collection<String>) {

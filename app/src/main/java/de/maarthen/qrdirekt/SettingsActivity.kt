@@ -75,7 +75,7 @@ class SettingsActivity : Activity() {
             setOnClickListener { scanDomain() }
         })
 
-        root.addView(label("Hinweis: Der Link öffnet im Standardbrowser deines Handys. Bei BlueNexus muss das derselbe Browser sein, in dem das Handy registriert wurde.", 14f, 24))
+        root.addView(label("Hinweis: Links öffnen im Standardbrowser deines Handys. Manche Seiten (z. B. mit Anmeldung oder Registrierung) funktionieren nur im selben Browser, in dem du dich zuvor angemeldet hast.", 14f, 24))
     }
 
     private fun scanDomain() {

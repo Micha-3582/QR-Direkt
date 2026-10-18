@@ -5,10 +5,11 @@ Winzige Android-App zum Scannen von QR-Codes: Sie liest einen Code, öffnet den 
 ## Verhalten
 - **Vertraute Domain:** Der Link öffnet sofort ohne Rückfrage.
 - **Fremde https-Domain:** Es erscheint „Diese Seite öffnen?“ mit Domain und Link. Mit **Immer öffnen** wird die Domain als vertraut gemerkt.
+- **Taschenlampe:** Das Taschenlampen-Symbol oben links schaltet bei schlechtem Licht das Licht ein (nur bei Geräten mit Blitz).
 - **Kein https-Link** (Text, WLAN, `http://` …): Der Inhalt wird als Text angezeigt, mit **Kopieren**.
 
 ## Einstellungen
-Auf das **Zahnrad** oben rechts in der Scan-Ansicht tippen. Dort lassen sich vertraute Domains eintragen, per QR-Code hinzufügen oder entfernen. Eine Domain gilt samt ihrer Subdomains. Geprüft wird der Host exakt, nicht „enthält“. Beim ersten Start ist `bluenexus-home.de` vorbelegt; wer eine eigene Adresse hat, trägt sie ein oder wählt beim ersten Scan „Immer öffnen“.
+Auf das **Zahnrad** oben rechts in der Scan-Ansicht tippen. Dort lassen sich vertraute Domains eintragen, per QR-Code hinzufügen oder entfernen. Eine Domain gilt samt ihrer Subdomains. Geprüft wird der Host exakt, nicht „enthält“. Beim ersten Start ist die Liste leer: Domain eintragen oder beim ersten Scan im Rückfrage-Fenster „Immer öffnen“ wählen.
 
 ## Wichtig bei BlueNexus
 Der Link öffnet im **Standardbrowser**. BlueNexus löst nur aus, wenn das Handy genau in diesem Browser registriert wurde („Handy registrieren“). Ist der Standardbrowser ein anderer (z. B. Samsung Internet statt Chrome), passiert beim Scan nichts.
