@@ -52,7 +52,7 @@ class MainActivity : Activity() {
             setPadding(60, 40, 60, 20)
         }
         AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle("Kein https-Link")
+            .setTitle("Inhalt des QR-Codes")
             .setView(tv)
             .setPositiveButton("Kopieren") { _, _ ->
                 val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
