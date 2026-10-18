@@ -148,11 +148,8 @@ class MainActivity : ComponentActivity() {
                             .addOnSuccessListener { codes ->
                                 val code = codes.firstOrNull { !it.rawValue.isNullOrEmpty() }
                                 val value = code?.rawValue
-                                if (value != null && !handled) {
-                                    handled = true
-                                    val box = code.boundingBox
-                                    runOnUiThread { highlightThen(box, imgW, imgH) { onScanned(value) } }
-                                }
+                                val box = code?.boundingBox
+                                runOnUiThread { onFrame(value, box, imgW, imgH) }
                             }
                             .addOnCompleteListener { proxy.close() }
                     }
@@ -189,41 +186,80 @@ class MainActivity : ComponentActivity() {
         if (!handled) bindCamera()
     }
 
-    /** Rahmen gleitet auf den erkannten Code, färbt sich grün; danach geht es weiter. */
-    private fun highlightThen(box: android.graphics.Rect?, imgW: Int, imgH: Int, done: () -> Unit) {
-        val frame = frameView
-        val pv = previewView
-        if (box == null || frame == null || pv == null || pv.width == 0 || imgW == 0 || imgH == 0) {
-            done(); return
+    // --- Lock-on: Rahmen folgt dem Code, nach kurzer stabiler Erkennung wird die Aktion ausgeführt ---
+    private val lockMs = 600L
+    private var lockedValue: String? = null
+    private var lockStart = 0L
+    private var ignoredValue: String? = null
+    private var ignoredSeen = 0L
+    private var lastValue: String? = null
+    private var cur: FloatArray? = null // aktuelle Rahmenposition l, t, w, h
+
+    private val resetFrame = Runnable {
+        if (!handled) {
+            lockedValue = null
+            cur = null
+            val f = frameView ?: return@Runnable
+            val lp = f.layoutParams as FrameLayout.LayoutParams
+            lp.gravity = Gravity.CENTER
+            lp.leftMargin = 0; lp.topMargin = 0
+            lp.width = dp(250); lp.height = dp(250)
+            f.layoutParams = lp
+            frameBg.setStroke(dp(3), Color.WHITE)
         }
-        // PreviewView skaliert mittig füllend (FILL_CENTER)
+    }
+
+    private fun onFrame(value: String?, box: android.graphics.Rect?, imgW: Int, imgH: Int) {
+        if (handled || isFinishing) return
+        val now = android.os.SystemClock.uptimeMillis()
+        if (ignoredValue != null && (value == null || value != ignoredValue) && now - ignoredSeen > 800) ignoredValue = null
+        if (value == null || box == null) return
+        if (value == ignoredValue) { ignoredSeen = now; return }
+        val frame = frameView ?: return
+        val pv = previewView ?: return
+        if (pv.width == 0 || imgW == 0 || imgH == 0) return
+
+        if (value != lockedValue) { lockedValue = value; lockStart = now }
+
+        // Position der erkannten Box auf die Vorschau umrechnen (PreviewView: FILL_CENTER)
         val scale = maxOf(pv.width.toFloat() / imgW, pv.height.toFloat() / imgH)
         val offX = (imgW * scale - pv.width) / 2f
         val offY = (imgH * scale - pv.height) / 2f
         val pad = dp(14)
-        val tl = (box.left * scale - offX).toInt() - pad
-        val tt = (box.top * scale - offY).toInt() - pad
-        val tw = (box.width() * scale).toInt() + 2 * pad
-        val th = (box.height() * scale).toInt() + 2 * pad
+        val target = floatArrayOf(
+            box.left * scale - offX - pad, box.top * scale - offY - pad,
+            box.width() * scale + 2 * pad, box.height() * scale + 2 * pad)
+        val c = cur ?: floatArrayOf(frame.left.toFloat(), frame.top.toFloat(), frame.width.toFloat(), frame.height.toFloat())
+        for (i in 0..3) c[i] += (target[i] - c[i]) * 0.6f // weich nachführen
+        cur = c
 
         val lp = frame.layoutParams as FrameLayout.LayoutParams
-        val l0 = frame.left; val t0 = frame.top; val w0 = frame.width; val h0 = frame.height
         lp.gravity = Gravity.TOP or Gravity.START
+        lp.leftMargin = c[0].toInt(); lp.topMargin = c[1].toInt()
+        lp.width = c[2].toInt(); lp.height = c[3].toInt()
+        frame.layoutParams = lp
         frameBg.setStroke(dp(4), 0xFF4CAF50.toInt())
-        android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 250
-            interpolator = android.view.animation.DecelerateInterpolator()
-            addUpdateListener {
-                val f = it.animatedValue as Float
-                lp.leftMargin = (l0 + (tl - l0) * f).toInt()
-                lp.topMargin = (t0 + (tt - t0) * f).toInt()
-                lp.width = (w0 + (tw - w0) * f).toInt()
-                lp.height = (h0 + (th - h0) * f).toInt()
-                frame.layoutParams = lp
-            }
-            start()
+
+        // Verschwindet der Code, geht der Rahmen zurück in die Mitte
+        frame.removeCallbacks(resetFrame)
+        frame.postDelayed(resetFrame, 450)
+
+        if (now - lockStart >= lockMs) {
+            handled = true
+            lastValue = value
+            frame.removeCallbacks(resetFrame)
+            onScanned(value)
         }
-        frame.postDelayed({ if (!isFinishing) done() }, 500)
+    }
+
+    /** Nach Abbrechen/Schließen: weiter scannen, derselbe Code löst erst nach Wegnehmen wieder aus. */
+    private fun resumeScanning() {
+        if (isFinishing) return
+        ignoredValue = lastValue
+        ignoredSeen = android.os.SystemClock.uptimeMillis()
+        lockedValue = null
+        handled = false
+        frameView?.let { it.removeCallbacks(resetFrame); resetFrame.run() }
     }
 
     private fun setTorch(on: Boolean) {
@@ -308,10 +344,11 @@ class MainActivity : ComponentActivity() {
             .setPositiveButton(t("Öffnen", "Open")) { _, _ -> launch(url) }
             .setNeutralButton(t("Immer öffnen", "Always open")) { _, _ ->
                 Trusted.add(this, host)
+                Toast.makeText(this, t("Domain eingetragen: $host", "Domain added: $host"), Toast.LENGTH_SHORT).show()
                 launch(url)
             }
             .setNegativeButton(t("Abbrechen", "Cancel"), null)
-            .setOnDismissListener { if (!isFinishing) finish() }
+            .setOnDismissListener { resumeScanning() }
             .show()
     }
 
@@ -331,7 +368,7 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, t("Kopiert", "Copied"), Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton(t("Schließen", "Close"), null)
-            .setOnDismissListener { finish() }
+            .setOnDismissListener { resumeScanning() }
             .show()
     }
 
