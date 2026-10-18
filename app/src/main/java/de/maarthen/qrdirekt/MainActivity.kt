@@ -248,6 +248,7 @@ class MainActivity : ComponentActivity() {
             handled = true
             lastValue = value
             frame.removeCallbacks(resetFrame)
+            frame.animate().alpha(0f).setDuration(350).start() // Rahmen sanft ausblenden
             onScanned(value)
         }
     }
@@ -259,7 +260,13 @@ class MainActivity : ComponentActivity() {
         ignoredSeen = android.os.SystemClock.uptimeMillis()
         lockedValue = null
         handled = false
-        frameView?.let { it.removeCallbacks(resetFrame); resetFrame.run() }
+        frameView?.let {
+            it.removeCallbacks(resetFrame)
+            it.animate().cancel()
+            resetFrame.run()
+            it.alpha = 0f
+            it.animate().alpha(1f).setDuration(250).start() // Rahmen blendet wieder ein
+        }
     }
 
     private fun setTorch(on: Boolean) {

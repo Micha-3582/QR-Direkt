@@ -16,8 +16,8 @@ android {
         applicationId = "de.maarthen.qrdirekt"
         minSdk = 23
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.13"
+        versionCode = 15
+        versionName = "1.14"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
     signingConfigs {
