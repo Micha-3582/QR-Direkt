@@ -18,7 +18,7 @@ object Trusted {
             .putStringSet(KEY, domains.toSet()).apply()
     }
 
-    /** Macht aus Eingaben wie "https://Nexus.Beispiel.de/abc" den Host "nexus.beispiel.de". */
+    /** Macht aus Eingaben wie "https://Shop.Beispiel.de/abc" den Host "shop.beispiel.de". */
     fun normalize(input: String): String {
         var s = input.trim().lowercase()
         if (s.contains("://")) s = Uri.parse(s).host.orEmpty() else s = s.substringBefore('/')

@@ -57,7 +57,7 @@ class SettingsActivity : Activity() {
 
         root.addView(label("Domain hinzufügen", 18f, 24))
         val input = EditText(this).apply {
-            hint = "z. B. nexus.meine-domain.de"
+            hint = "z. B. meine-domain.de"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setSingleLine()
         }
