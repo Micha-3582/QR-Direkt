@@ -50,6 +50,9 @@ class MainActivity : ComponentActivity() {
     private var cameraControl: androidx.camera.core.CameraControl? = null
     private var torchOn = false
     private var hintView: TextView? = null
+    private var frameView: View? = null
+    private var previewView: PreviewView? = null
+    private val frameBg = GradientDrawable()
     private var torchView: View? = null
     private val torchBg = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x88000000.toInt()) }
     private lateinit var root: FrameLayout
@@ -101,14 +104,16 @@ class MainActivity : ComponentActivity() {
 
     private fun startCamera() {
         val preview = PreviewView(this).apply { implementationMode = PreviewView.ImplementationMode.COMPATIBLE }
+        previewView = preview
         root.addView(preview, FrameLayout.LayoutParams(-1, -1))
 
         val frame = View(this).apply {
-            background = GradientDrawable().apply {
+            background = frameBg.apply {
                 setStroke(dp(3), Color.WHITE)
                 cornerRadius = dp(16).toFloat()
             }
         }
+        frameView = frame
         root.addView(frame, FrameLayout.LayoutParams(dp(250), dp(250), Gravity.CENTER))
 
         hintView = TextView(this).apply {
@@ -134,13 +139,19 @@ class MainActivity : ComponentActivity() {
                     a.setAnalyzer(analysisExecutor) { proxy ->
                         val media = proxy.image
                         if (media == null || handled) { proxy.close(); return@setAnalyzer }
-                        val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
+                        val rot = proxy.imageInfo.rotationDegrees
+                        // Bildgröße nach Drehung (so liegt auch die erkannte Box vor)
+                        val imgW = if (rot % 180 == 0) proxy.width else proxy.height
+                        val imgH = if (rot % 180 == 0) proxy.height else proxy.width
+                        val image = InputImage.fromMediaImage(media, rot)
                         scanner.process(image)
                             .addOnSuccessListener { codes ->
-                                val value = codes.firstOrNull { !it.rawValue.isNullOrEmpty() }?.rawValue
+                                val code = codes.firstOrNull { !it.rawValue.isNullOrEmpty() }
+                                val value = code?.rawValue
                                 if (value != null && !handled) {
                                     handled = true
-                                    runOnUiThread { onScanned(value) }
+                                    val box = code.boundingBox
+                                    runOnUiThread { highlightThen(box, imgW, imgH) { onScanned(value) } }
                                 }
                             }
                             .addOnCompleteListener { proxy.close() }
@@ -176,6 +187,43 @@ class MainActivity : ComponentActivity() {
         hintView?.text = t("QR-Code in den Rahmen halten", "Hold the QR code inside the frame")
         torchView?.contentDescription = t("Taschenlampe", "Flashlight")
         if (!handled) bindCamera()
+    }
+
+    /** Rahmen gleitet auf den erkannten Code, färbt sich grün; danach geht es weiter. */
+    private fun highlightThen(box: android.graphics.Rect?, imgW: Int, imgH: Int, done: () -> Unit) {
+        val frame = frameView
+        val pv = previewView
+        if (box == null || frame == null || pv == null || pv.width == 0 || imgW == 0 || imgH == 0) {
+            done(); return
+        }
+        // PreviewView skaliert mittig füllend (FILL_CENTER)
+        val scale = maxOf(pv.width.toFloat() / imgW, pv.height.toFloat() / imgH)
+        val offX = (imgW * scale - pv.width) / 2f
+        val offY = (imgH * scale - pv.height) / 2f
+        val pad = dp(14)
+        val tl = (box.left * scale - offX).toInt() - pad
+        val tt = (box.top * scale - offY).toInt() - pad
+        val tw = (box.width() * scale).toInt() + 2 * pad
+        val th = (box.height() * scale).toInt() + 2 * pad
+
+        val lp = frame.layoutParams as FrameLayout.LayoutParams
+        val l0 = frame.left; val t0 = frame.top; val w0 = frame.width; val h0 = frame.height
+        lp.gravity = Gravity.TOP or Gravity.START
+        frameBg.setStroke(dp(4), 0xFF4CAF50.toInt())
+        android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 250
+            interpolator = android.view.animation.DecelerateInterpolator()
+            addUpdateListener {
+                val f = it.animatedValue as Float
+                lp.leftMargin = (l0 + (tl - l0) * f).toInt()
+                lp.topMargin = (t0 + (tt - t0) * f).toInt()
+                lp.width = (w0 + (tw - w0) * f).toInt()
+                lp.height = (h0 + (th - h0) * f).toInt()
+                frame.layoutParams = lp
+            }
+            start()
+        }
+        frame.postDelayed({ if (!isFinishing) done() }, 500)
     }
 
     private fun setTorch(on: Boolean) {
