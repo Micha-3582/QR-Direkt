@@ -16,8 +16,9 @@ android {
         applicationId = "de.maarthen.qrdirekt"
         minSdk = 23
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.7"
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
     signingConfigs {
         create("release") {
@@ -40,5 +41,11 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
-    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.activity:activity:1.9.3")
+    val camerax = "1.3.4"
+    implementation("androidx.camera:camera-core:$camerax")
+    implementation("androidx.camera:camera-camera2:$camerax")
+    implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.camera:camera-view:$camerax")
 }

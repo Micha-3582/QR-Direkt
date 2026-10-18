@@ -1,6 +1,7 @@
 package de.maarthen.qrdirekt
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
@@ -10,9 +11,6 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 class SettingsActivity : Activity() {
     private lateinit var root: LinearLayout
@@ -81,18 +79,22 @@ class SettingsActivity : Activity() {
     }
 
     private fun scanDomain() {
-        val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
-        GmsBarcodeScanning.getClient(this, options).startScan()
-            .addOnSuccessListener { b ->
-                val raw = b.rawValue.orEmpty().trim()
-                val host = if (raw.startsWith("https://", true)) Trusted.normalize(raw) else ""
-                if (Trusted.isValid(host)) {
-                    Trusted.add(this, host)
-                    Toast.makeText(this, "Hinzugefügt: $host", Toast.LENGTH_SHORT).show()
-                    render()
-                } else {
-                    Toast.makeText(this, "Kein https-Link", Toast.LENGTH_LONG).show()
-                }
-            }
+        startActivityForResult(
+            Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_PICK, true), 1)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != 1 || resultCode != RESULT_OK) return
+        val raw = data?.getStringExtra(MainActivity.EXTRA_RESULT).orEmpty().trim()
+        val host = if (raw.startsWith("https://", true)) Trusted.normalize(raw) else ""
+        if (Trusted.isValid(host)) {
+            Trusted.add(this, host)
+            Toast.makeText(this, "Hinzugefügt: $host", Toast.LENGTH_SHORT).show()
+            render()
+        } else {
+            Toast.makeText(this, "Kein https-Link", Toast.LENGTH_LONG).show()
+        }
     }
 }
