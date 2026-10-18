@@ -49,9 +49,12 @@ class MainActivity : ComponentActivity() {
     private var analysisUse: ImageAnalysis? = null
     private var cameraControl: androidx.camera.core.CameraControl? = null
     private var torchOn = false
+    private var hintView: TextView? = null
     private var torchView: View? = null
     private val torchBg = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x88000000.toInt()) }
     private lateinit var root: FrameLayout
+
+    private fun t(de: String, en: String) = Lang.t(this, de, en)
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
@@ -79,13 +82,13 @@ class MainActivity : ComponentActivity() {
             setPadding(dp(32), dp(32), dp(32), dp(32))
         }
         box.addView(TextView(this).apply {
-            text = "QR Direkt braucht die Kamera, um QR-Codes zu lesen."
+            text = t("QR Direkt braucht die Kamera, um QR-Codes zu lesen.", "QR Direkt needs the camera to read QR codes.")
             setTextColor(Color.WHITE)
             textSize = 18f
             gravity = Gravity.CENTER
         })
         box.addView(Button(this).apply {
-            text = "App-Einstellungen öffnen"
+            text = t("App-Einstellungen öffnen", "Open app settings")
             setOnClickListener {
                 startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                     Uri.parse("package:$packageName")))
@@ -108,14 +111,15 @@ class MainActivity : ComponentActivity() {
         }
         root.addView(frame, FrameLayout.LayoutParams(dp(250), dp(250), Gravity.CENTER))
 
-        root.addView(TextView(this).apply {
-            text = "QR-Code in den Rahmen halten"
+        hintView = TextView(this).apply {
+            text = t("QR-Code in den Rahmen halten", "Hold the QR code inside the frame")
             setTextColor(Color.WHITE)
             textSize = 16f
             gravity = Gravity.CENTER
             setBackgroundColor(0x88000000.toInt())
             setPadding(dp(16), dp(10), dp(16), dp(10))
-        }, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+        }
+        root.addView(hintView, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
             bottomMargin = dp(48)
         })
         addGear()
@@ -161,13 +165,16 @@ class MainActivity : ComponentActivity() {
             setTorch(false)
             if (camera.cameraInfo.hasFlashUnit()) showTorchButton()
         } catch (e: Exception) {
-            Toast.makeText(this, "Kamera nicht verfügbar: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, t("Kamera nicht verfügbar: ${e.message}", "Camera unavailable: ${e.message}"), Toast.LENGTH_LONG).show()
             finish()
         }
     }
 
     override fun onResume() {
         super.onResume()
+        // Sprache kann in den Einstellungen gewechselt worden sein
+        hintView?.text = t("QR-Code in den Rahmen halten", "Hold the QR code inside the frame")
+        torchView?.contentDescription = t("Taschenlampe", "Flashlight")
         if (!handled) bindCamera()
     }
 
@@ -185,7 +192,7 @@ class MainActivity : ComponentActivity() {
             textSize = 24f
             gravity = Gravity.CENTER
             background = torchBg
-            contentDescription = "Taschenlampe"
+            contentDescription = t("Taschenlampe", "Flashlight")
             setOnClickListener { setTorch(!torchOn) }
         }
         torchView = torch
@@ -206,7 +213,7 @@ class MainActivity : ComponentActivity() {
                 shape = GradientDrawable.OVAL
                 setColor(0x88000000.toInt())
             }
-            contentDescription = "Einstellungen"
+            contentDescription = t("Einstellungen", "Settings")
             setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
         }
         root.addView(gear, FrameLayout.LayoutParams(dp(52), dp(52), Gravity.TOP or Gravity.END).apply {
@@ -235,7 +242,7 @@ class MainActivity : ComponentActivity() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(this, "Kein Browser gefunden", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, t("Kein Browser gefunden", "No browser found"), Toast.LENGTH_LONG).show()
         }
         finish()
     }
@@ -248,14 +255,14 @@ class MainActivity : ComponentActivity() {
             setPadding(60, 40, 60, 20)
         }
         AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle("Diese Seite öffnen?")
+            .setTitle(t("Diese Seite öffnen?", "Open this page?"))
             .setView(tv)
-            .setPositiveButton("Öffnen") { _, _ -> launch(url) }
-            .setNeutralButton("Immer öffnen") { _, _ ->
+            .setPositiveButton(t("Öffnen", "Open")) { _, _ -> launch(url) }
+            .setNeutralButton(t("Immer öffnen", "Always open")) { _, _ ->
                 Trusted.add(this, host)
                 launch(url)
             }
-            .setNegativeButton("Abbrechen", null)
+            .setNegativeButton(t("Abbrechen", "Cancel"), null)
             .setOnDismissListener { if (!isFinishing) finish() }
             .show()
     }
@@ -268,14 +275,14 @@ class MainActivity : ComponentActivity() {
             setPadding(60, 40, 60, 20)
         }
         AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle("Inhalt des QR-Codes")
+            .setTitle(t("Inhalt des QR-Codes", "QR code content"))
             .setView(tv)
-            .setPositiveButton("Kopieren") { _, _ ->
+            .setPositiveButton(t("Kopieren", "Copy")) { _, _ ->
                 val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 cm.setPrimaryClip(ClipData.newPlainText("QR", text))
-                Toast.makeText(this, "Kopiert", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, t("Kopiert", "Copied"), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Schließen", null)
+            .setNegativeButton(t("Schließen", "Close"), null)
             .setOnDismissListener { finish() }
             .show()
     }

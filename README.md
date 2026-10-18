@@ -11,6 +11,9 @@ Winzige Android-App zum Scannen von QR-Codes: Sie liest einen Code, öffnet den 
 ## Einstellungen
 Auf das **Zahnrad** oben rechts in der Scan-Ansicht tippen. Dort lassen sich vertraute Domains eintragen, per QR-Code hinzufügen oder entfernen. Eine Domain gilt samt ihrer Subdomains. Geprüft wird der Host exakt, nicht „enthält“. Beim ersten Start ist die Liste leer: Domain eintragen oder beim ersten Scan im Rückfrage-Fenster „Immer öffnen“ wählen.
 
+## Sprache
+Deutsch und Englisch, umschaltbar über die Flaggen oben rechts in den Einstellungen. Ohne Auswahl folgt die App der Handy-Sprache (Deutsch, sonst Englisch). Unten in den Einstellungen steht ein Link zum GitHub-Profil.
+
 ## Wichtig bei BlueNexus
 Der Link öffnet im **Standardbrowser**. BlueNexus löst nur aus, wenn das Handy genau in diesem Browser registriert wurde („Handy registrieren“). Ist der Standardbrowser ein anderer (z. B. Samsung Internet statt Chrome), passiert beim Scan nichts.
 
