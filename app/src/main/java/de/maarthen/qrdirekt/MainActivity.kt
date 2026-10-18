@@ -44,6 +44,13 @@ class MainActivity : ComponentActivity() {
         BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
     )
     @Volatile private var handled = false
+    private var provider: ProcessCameraProvider? = null
+    private var prevUse: Preview? = null
+    private var analysisUse: ImageAnalysis? = null
+    private var cameraControl: androidx.camera.core.CameraControl? = null
+    private var torchOn = false
+    private var torchView: View? = null
+    private val torchBg = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x88000000.toInt()) }
     private lateinit var root: FrameLayout
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -115,52 +122,73 @@ class MainActivity : ComponentActivity() {
 
         val future = ProcessCameraProvider.getInstance(this)
         future.addListener({
-            val provider = future.get()
-            val prev = Preview.Builder().build().also { it.setSurfaceProvider(preview.surfaceProvider) }
-            val analysis = ImageAnalysis.Builder()
+            provider = future.get()
+            prevUse = Preview.Builder().build().also { it.setSurfaceProvider(preview.surfaceProvider) }
+            analysisUse = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-            analysis.setAnalyzer(analysisExecutor) { proxy ->
-                val media = proxy.image
-                if (media == null || handled) { proxy.close(); return@setAnalyzer }
-                val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
-                scanner.process(image)
-                    .addOnSuccessListener { codes ->
-                        val value = codes.firstOrNull { !it.rawValue.isNullOrEmpty() }?.rawValue
-                        if (value != null && !handled) {
-                            handled = true
-                            runOnUiThread { onScanned(value) }
-                        }
+                .build().also { a ->
+                    a.setAnalyzer(analysisExecutor) { proxy ->
+                        val media = proxy.image
+                        if (media == null || handled) { proxy.close(); return@setAnalyzer }
+                        val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
+                        scanner.process(image)
+                            .addOnSuccessListener { codes ->
+                                val value = codes.firstOrNull { !it.rawValue.isNullOrEmpty() }?.rawValue
+                                if (value != null && !handled) {
+                                    handled = true
+                                    runOnUiThread { onScanned(value) }
+                                }
+                            }
+                            .addOnCompleteListener { proxy.close() }
                     }
-                    .addOnCompleteListener { proxy.close() }
-            }
-            try {
-                provider.unbindAll()
-                val camera = provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, prev, analysis)
-                if (camera.cameraInfo.hasFlashUnit()) addTorch(camera.cameraControl)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Kamera nicht verfügbar: ${e.message}", Toast.LENGTH_LONG).show()
-                finish()
-            }
+                }
+            bindCamera()
         }, ContextCompat.getMainExecutor(this))
     }
 
+    /**
+     * Bindet Vorschau und Analyse (neu). Wird auch in onResume aufgerufen: Eine zweite
+     * Instanz (Domain per QR hinzufügen) darf die Kamera dieser Instanz nicht dauerhaft kappen.
+     */
+    private fun bindCamera() {
+        val prov = provider ?: return
+        val prev = prevUse ?: return
+        val analysis = analysisUse ?: return
+        try {
+            prov.unbind(prev, analysis)
+            val camera = prov.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, prev, analysis)
+            cameraControl = camera.cameraControl
+            setTorch(false)
+            if (camera.cameraInfo.hasFlashUnit()) showTorchButton()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Kamera nicht verfügbar: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!handled) bindCamera()
+    }
+
+    private fun setTorch(on: Boolean) {
+        torchOn = on
+        cameraControl?.enableTorch(on)
+        torchBg.setColor(if (on) 0xCCFFC107.toInt() else 0x88000000.toInt())
+    }
+
     /** Taschenlampe oben links: bei schlechtem Licht ein-/ausschalten. */
-    private fun addTorch(control: androidx.camera.core.CameraControl) {
-        var on = false
-        val bg = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x88000000.toInt()) }
+    private fun showTorchButton() {
+        if (torchView != null) return
         val torch = TextView(this).apply {
             text = "🔦"
             textSize = 24f
             gravity = Gravity.CENTER
-            background = bg
+            background = torchBg
             contentDescription = "Taschenlampe"
-            setOnClickListener {
-                on = !on
-                control.enableTorch(on)
-                bg.setColor(if (on) 0xCCFFC107.toInt() else 0x88000000.toInt())
-            }
+            setOnClickListener { setTorch(!torchOn) }
         }
+        torchView = torch
         root.addView(torch, FrameLayout.LayoutParams(dp(52), dp(52), Gravity.TOP or Gravity.START).apply {
             topMargin = dp(16); marginStart = dp(16)
         })
