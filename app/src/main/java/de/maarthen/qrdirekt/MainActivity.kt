@@ -15,10 +15,6 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 class MainActivity : Activity() {
-    companion object {
-        // Domains (inkl. Subdomains), die ohne Rückfrage geöffnet werden
-        private val TRUSTED_DOMAINS = listOf("bluenexus-home.de")
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,8 +38,7 @@ class MainActivity : Activity() {
             return
         }
         val host = Uri.parse(url).host?.lowercase().orEmpty()
-        val trusted = TRUSTED_DOMAINS.any { host == it || host.endsWith(".$it") }
-        if (trusted) launch(url) else confirmOpen(url, host)
+        if (Trusted.isTrusted(this, host)) launch(url) else confirmOpen(url, host)
     }
 
     private fun launch(url: String) {
@@ -66,6 +61,10 @@ class MainActivity : Activity() {
             .setTitle("Diese Seite öffnen?")
             .setView(tv)
             .setPositiveButton("Öffnen") { _, _ -> launch(url) }
+            .setNeutralButton("Immer öffnen") { _, _ ->
+                Trusted.add(this, host)
+                launch(url)
+            }
             .setNegativeButton("Abbrechen", null)
             .setOnDismissListener { if (!isFinishing) finish() }
             .show()

@@ -1,0 +1,9 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="settings" android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_settings"
+        android:shortcutLongLabel="@string/shortcut_settings">
+        <intent android:action="android.intent.action.VIEW"
+            android:targetPackage="de.maarthen.qrdirekt"
+            android:targetClass="de.maarthen.qrdirekt.SettingsActivity" />
+    </shortcut>
+</shortcuts>
