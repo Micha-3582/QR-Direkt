@@ -10,14 +10,14 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "de.maarthen.qrdirekt"
+    namespace = "de.micha3582.qrdirekt"
     compileSdk = 34
     defaultConfig {
-        applicationId = "de.maarthen.qrdirekt"
+        applicationId = "de.micha3582.qrdirekt"
         minSdk = 23
         targetSdk = 34
-        versionCode = 15
-        versionName = "1.14"
+        versionCode = 16
+        versionName = "1.15"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
     signingConfigs {

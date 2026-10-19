@@ -1,4 +1,4 @@
-package de.maarthen.qrdirekt
+package de.micha3582.qrdirekt
 
 import android.content.Context
 import android.net.Uri

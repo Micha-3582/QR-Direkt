@@ -3,7 +3,7 @@
         android:shortcutShortLabel="@string/shortcut_settings"
         android:shortcutLongLabel="@string/shortcut_settings">
         <intent android:action="android.intent.action.VIEW"
-            android:targetPackage="de.maarthen.qrdirekt"
-            android:targetClass="de.maarthen.qrdirekt.SettingsActivity" />
+            android:targetPackage="de.micha3582.qrdirekt"
+            android:targetClass="de.micha3582.qrdirekt.SettingsActivity" />
     </shortcut>
 </shortcuts>

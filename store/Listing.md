@@ -1,6 +1,6 @@
 # Play-Store-Eintrag: QR Direkt
 
-Alles zum Kopieren in die Play Console. Entwickler: **Micha3582**. Paketname: `de.maarthen.qrdirekt`.
+Alles zum Kopieren in die Play Console. Entwickler: **Micha3582**. Paketname: `de.micha3582.qrdirekt`.
 
 ## Deutsch (Standardsprache)
 
