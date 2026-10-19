@@ -18,7 +18,7 @@ Deutsch und Englisch, umschaltbar über die Flaggen oben rechts in den Einstellu
 Der Link öffnet im **Standardbrowser**. BlueNexus löst nur aus, wenn das Handy genau in diesem Browser registriert wurde („Handy registrieren“). Ist der Standardbrowser ein anderer (z. B. Samsung Internet statt Chrome), passiert beim Scan nichts.
 
 ## Voraussetzungen
-Android 6+. Die App liest QR-Codes mit eigener Kamera-Ansicht (CameraX + ML Kit, vollständig offline, ohne Google Play Services) und fragt beim ersten Start einmal nach der Kamera-Berechtigung.
+Android 7+. Die App liest QR-Codes mit eigener Kamera-Ansicht (CameraX + ML Kit, vollständig offline, ohne Google Play Services) und fragt beim ersten Start einmal nach der Kamera-Berechtigung.
 
 ## Installation
 APK aus dem Release herunterladen, auf dem Handy öffnen, „Installation aus unbekannten Quellen“ für den Browser/Dateimanager erlauben.

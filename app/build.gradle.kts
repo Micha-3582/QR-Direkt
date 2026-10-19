@@ -14,10 +14,10 @@ android {
     compileSdk = 34
     defaultConfig {
         applicationId = "de.micha3582.qrdirekt"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 34
-        versionCode = 16
-        versionName = "1.15"
+        versionCode = 17
+        versionName = "1.16"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
     signingConfigs {
